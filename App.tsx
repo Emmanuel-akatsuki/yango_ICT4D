@@ -1,29 +1,26 @@
 /**
- * Yango ICT4D - Driver App
- * Application pour chauffeurs avec suivi en temps réel
- * et gestion des courses
- * 
+ * Sample React Native App
+ * https://github.com/facebook/react-native
+ *
  * @format
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { NewAppScreen } from '@react-native/new-app-screen';
 import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
 import {
   SafeAreaProvider,
+  useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { onAuthChange } from './src/services/authService';
-import DriverMainScreen from './src/screens/DriverMainScreen';
-
-// TODO: Remplacer par l'authentification réelle
-const TEST_DRIVER_ID = 'driver_test_001';
-const TEST_DRIVER_NAME = 'Jean Dupont';
+import { seedPointsSecours } from './src/services/geoService';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    // Écouter l'état de l'authentification
+    // Test 1 — Auth
     const unsub = onAuthChange((user: any) => {
       setCurrentUser(user);
       if (user) {
@@ -33,6 +30,9 @@ function App() {
       }
     });
 
+    // Test 2 — Seed points de secours (décommente une seule fois)
+    // seedPointsSecours().then(() => console.log('✅ Points de secours ajoutés'));
+
     return () => unsub();
   }, []);
 
@@ -41,11 +41,23 @@ function App() {
 
   return (
     <SafeAreaProvider>
+      {/* Configuration de la barre de statut du téléphone */}
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <View style={styles.container}>
-        <DriverMainScreen driverId={driverId} driverName={TEST_DRIVER_NAME} />
-      </View>
+      <AppContent />
     </SafeAreaProvider>
+  );
+}
+
+function AppContent() {
+  const safeAreaInsets = useSafeAreaInsets();
+
+  return (
+    <View style={styles.container}>
+      <NewAppScreen
+        templateFileName="App.tsx"
+        safeAreaInsets={safeAreaInsets}
+      />
+    </View>
   );
 }
 
