@@ -1,26 +1,31 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
+ * Yango ICT4D - Driver App
+ * Application pour chauffeurs avec suivi en temps réel
+ * et gestion des courses
+ * 
  * @format
  */
 
-import { useEffect } from 'react';
-import { NewAppScreen } from '@react-native/new-app-screen';
+import { useEffect, useState } from 'react';
 import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
 import {
   SafeAreaProvider,
-  useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { onAuthChange } from './src/services/authService';
-import { seedPointsSecours } from './src/services/geoService';
+import DriverMainScreen from './src/screens/DriverMainScreen';
+
+// TODO: Remplacer par l'authentification réelle
+const TEST_DRIVER_ID = 'driver_test_001';
+const TEST_DRIVER_NAME = 'Jean Dupont';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    // Test 1 — Auth
+    // Écouter l'état de l'authentification
     const unsub = onAuthChange((user: any) => {
+      setCurrentUser(user);
       if (user) {
         console.log('✅ Auth OK — Connecté :', user.email);
       } else {
@@ -28,30 +33,19 @@ function App() {
       }
     });
 
-    // Test 2 — Seed points de secours (décommente une seule fois)
-    // seedPointsSecours().then(() => console.log('✅ Points de secours ajoutés'));
-
     return () => unsub();
   }, []);
+
+  // Pour le développement, utiliser le TEST_DRIVER_ID
+  const driverId = currentUser?.uid || TEST_DRIVER_ID;
 
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <View style={styles.container}>
+        <DriverMainScreen driverId={driverId} driverName={TEST_DRIVER_NAME} />
+      </View>
     </SafeAreaProvider>
-  );
-}
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
   );
 }
 
