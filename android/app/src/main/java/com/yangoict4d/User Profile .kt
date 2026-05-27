@@ -1,4 +1,4 @@
-package com.yango.client
+package com.yangoict4d
 
 import android.os.Bundle
 import android.widget.*
