@@ -1,3 +1,4 @@
+import firestore from '@react-native-firebase/firestore';
 import React, { useState } from 'react';
 import {
   View,
@@ -12,8 +13,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { RideRequest, completeRide } from '../services/rideService';
-import { updateDoc, doc } from 'firebase/firestore';
-import { db } from '../config/firebase';
+
+
 
 interface RideCompletionScreenProps {
   visible: boolean;
@@ -38,8 +39,8 @@ export default function RideCompletionScreen({
     setIsSubmitting(true);
     try {
       // Mettre à jour la course avec la note et les commentaires
-      const rideRef = doc(db, 'rides', rideRequest.id);
-      await updateDoc(rideRef, {
+      const rideRef = firestore().collection('rides').doc(rideRequest.id);
+      await rideRef.update( {
         driverRating: rating,
         driverComments: comments,
       });

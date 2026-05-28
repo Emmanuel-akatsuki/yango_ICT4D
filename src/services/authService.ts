@@ -1,36 +1,21 @@
-import { auth } from '../config/firebase';
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut
-} from 'firebase/auth';
+import auth from '@react-native-firebase/auth';
 import { createUser } from './userService';
 
-// Inscription
-export async function registerEmail(
-  email: string,
-  password: string,
-  nom: string,
-  telephone: string,
-  role: string
-) {
-  const { user } = await createUserWithEmailAndPassword(auth, email, password);
+export async function registerEmail(email: string, password: string, nom: string, telephone: string, role: string) {
+  const { user } = await auth().createUserWithEmailAndPassword(email, password);
   await createUser(user.uid, { nom, telephone, email, role });
   return user;
 }
 
-// Connexion
 export async function loginEmail(email: string, password: string) {
-  const { user } = await signInWithEmailAndPassword(auth, email, password);
+  const { user } = await auth().signInWithEmailAndPassword(email, password);
   return user;
 }
 
-// Déconnexion
 export async function logout() {
-  await signOut(auth);
+  await auth().signOut();
 }
 
-// Observer l'état de connexion
 export function onAuthChange(callback: (user: any) => void) {
-  return auth.onAuthStateChanged(callback);
+  return auth().onAuthStateChanged(callback);
 }

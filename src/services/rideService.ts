@@ -1,28 +1,13 @@
-import { db } from '../config/firebase';
-import {
-  collection,
-  addDoc,
-  doc,
-  updateDoc,
-  onSnapshot,
-  query,
-  where,
-  GeoPoint,
-  Timestamp,
-  getDocs,
-} from 'firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
 
-/**
- * États possibles d'une course
- */
 export enum RideStatus {
-  PENDING = 'pending',        // En attente d'acceptation
-  ACCEPTED = 'accepted',      // Acceptée par le chauffeur
-  ARRIVING = 'arriving',      // Chauffeur en route vers le client
-  ARRIVED = 'arrived',        // Chauffeur arrivé chez le client
-  IN_PROGRESS = 'in_progress', // Course en cours
-  COMPLETED = 'completed',    // Course terminée
-  CANCELLED = 'cancelled',    // Course annulée
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  ARRIVING = 'arriving',
+  ARRIVED = 'arrived',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
 }
 
 export interface RideRequest {
@@ -36,8 +21,8 @@ export interface RideRequest {
   status: RideStatus;
   fare: number;
   distance: number;
-  duration: number; // en secondes
-  requestedAt: any; // Timestamp
+  duration: number;
+  requestedAt: any;
   acceptedAt?: any;
   startedAt?: any;
   completedAt?: any;
@@ -45,161 +30,75 @@ export interface RideRequest {
   comments?: string;
 }
 
-/**
- * Créer une nouvelle demande de course (client)
- */
-export async function createRideRequest(
-  clientId: string,
-  pickupLocation: { lat: number; lng: number },
-  dropoffLocation: { lat: number; lng: number },
-  pickupAddress: string,
-  dropoffAddress: string,
-  fare: number,
-  distance: number,
-  duration: number
-): Promise<string> {
-  const ride = await addDoc(collection(db, 'rides'), {
+export async function createRideRequest(clientId: string, pickupLocation: any, dropoffLocation: any, pickupAddress: string, dropoffAddress: string, fare: number, distance: number, duration: number): Promise<string> {
+  const ref = await firestore().collection('rides').add({
     clientId,
-    pickupLocation: new GeoPoint(pickupLocation.lat, pickupLocation.lng),
-    dropoffLocation: new GeoPoint(dropoffLocation.lat, dropoffLocation.lng),
-    pickupAddress,
-    dropoffAddress,
+    pickupLocation: new firestore.GeoPoint(pickupLocation.lat, pickupLocation.lng),
+    dropoffLocation: new firestore.GeoPoint(dropoffLocation.lat, dropoffLocation.lng),
+    pickupAddress, dropoffAddress,
     status: RideStatus.PENDING,
-    fare,
-    distance,
-    duration,
-    requestedAt: Timestamp.now(),
+    fare, distance, duration,
+    requestedAt: firestore.FieldValue.serverTimestamp(),
   });
-  return ride.id;
+  return ref.id;
 }
 
-/**
- * Accepter une course (chauffeur)
- */
 export async function acceptRide(rideId: string, driverId: string) {
-  const rideRef = doc(db, 'rides', rideId);
-  await updateDoc(rideRef, {
-    driverId,
-    status: RideStatus.ACCEPTED,
-    acceptedAt: Timestamp.now(),
+  await firestore().collection('rides').doc(rideId).update({
+    driverId, status: RideStatus.ACCEPTED,
+    acceptedAt: firestore.FieldValue.serverTimestamp(),
   });
 }
 
-/**
- * Refuser une course (chauffeur)
- */
 export async function rejectRide(rideId: string) {
-  const rideRef = doc(db, 'rides', rideId);
-  await updateDoc(rideRef, {
-    status: RideStatus.CANCELLED,
-  });
+  await firestore().collection('rides').doc(rideId).update({ status: RideStatus.CANCELLED });
 }
 
-/**
- * Signaler l'arrivée chez le client
- */
 export async function markAsArrived(rideId: string) {
-  const rideRef = doc(db, 'rides', rideId);
-  await updateDoc(rideRef, {
+  await firestore().collection('rides').doc(rideId).update({
     status: RideStatus.ARRIVED,
-    arrivedAt: Timestamp.now(),
+    arrivedAt: firestore.FieldValue.serverTimestamp(),
   });
 }
 
-/**
- * Commencer la course
- */
 export async function startRide(rideId: string) {
-  const rideRef = doc(db, 'rides', rideId);
-  await updateDoc(rideRef, {
+  await firestore().collection('rides').doc(rideId).update({
     status: RideStatus.IN_PROGRESS,
-    startedAt: Timestamp.now(),
+    startedAt: firestore.FieldValue.serverTimestamp(),
   });
 }
 
-/**
- * Terminer la course
- */
 export async function completeRide(rideId: string) {
-  const rideRef = doc(db, 'rides', rideId);
-  await updateDoc(rideRef, {
+  await firestore().collection('rides').doc(rideId).update({
     status: RideStatus.COMPLETED,
-    completedAt: Timestamp.now(),
+    completedAt: firestore.FieldValue.serverTimestamp(),
   });
 }
 
-/**
- * Écouter les courses en attente pour un zone (pour les chauffeurs)
- */
-export function subscribeToPendingRides(
-  pickupLat: number,
-  pickupLng: number,
-  radiusKm: number = 5,
-  callback: (rides: RideRequest[]) => void
-) {
-  // Note: Pour une vraie implémentation avec géoquerying,
-  // utiliser geofire-common comme dans geoService.ts
-  const q = query(
-    collection(db, 'rides'),
-    where('status', '==', RideStatus.PENDING)
-  );
-
-  return onSnapshot(q, (querySnapshot) => {
-    const rides: RideRequest[] = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      rides.push({
-        id: doc.id,
-        ...data,
-      } as RideRequest);
+export function subscribeToPendingRides(callback: (rides: RideRequest[]) => void) {
+  return firestore().collection('rides')
+    .where('status', '==', RideStatus.PENDING)
+    .onSnapshot(snap => {
+      const rides: RideRequest[] = snap.docs.map(d => ({ id: d.id, ...d.data() } as RideRequest));
+      callback(rides);
     });
-    callback(rides);
-  });
 }
 
-/**
- * Écouter la course actuelle du chauffeur
- */
-export function subscribeToCurrentRide(
-  driverId: string,
-  callback: (ride: RideRequest | null) => void
-) {
-  const q = query(
-    collection(db, 'rides'),
-    where('driverId', '==', driverId),
-    where('status', 'in', [
-      RideStatus.ACCEPTED,
-      RideStatus.ARRIVING,
-      RideStatus.ARRIVED,
-      RideStatus.IN_PROGRESS,
-    ])
-  );
-
-  return onSnapshot(q, (querySnapshot) => {
-    if (!querySnapshot.empty) {
-      const doc = querySnapshot.docs[0];
-      const data = doc.data();
-      callback({
-        id: doc.id,
-        ...data,
-      } as RideRequest);
-    } else {
-      callback(null);
-    }
-  });
+export function subscribeToCurrentRide(driverId: string, callback: (ride: RideRequest | null) => void) {
+  return firestore().collection('rides')
+    .where('driverId', '==', driverId)
+    .where('status', 'in', [RideStatus.ACCEPTED, RideStatus.ARRIVING, RideStatus.ARRIVED, RideStatus.IN_PROGRESS])
+    .onSnapshot(snap => {
+      if (!snap.empty) {
+        const d = snap.docs[0];
+        callback({ id: d.id, ...d.data() } as RideRequest);
+      } else {
+        callback(null);
+      }
+    });
 }
 
-/**
- * Obtenir les détails d'une course
- */
 export async function getRideDetails(rideId: string): Promise<RideRequest | null> {
-  const rideRef = doc(db, 'rides', rideId);
-  const docSnap = await getDocs(collection(db, 'rides'));
-  
-  for (const d of docSnap.docs) {
-    if (d.id === rideId) {
-      return { id: d.id, ...d.data() } as RideRequest;
-    }
-  }
-  return null;
+  const snap = await firestore().collection('rides').doc(rideId).get();
+  return snap.exists ? { id: snap.id, ...snap.data() } as RideRequest : null;
 }

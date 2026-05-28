@@ -1,14 +1,13 @@
-import { db } from '../config/firebase';
-import { collection, addDoc, GeoPoint } from 'firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
 
 export async function createIncident(userId: string, position: any, message: string) {
-  const ref = await addDoc(collection(db, 'incidents_secours'), {
+  const ref = await firestore().collection('incidents_secours').add({
     userId,
-    position: new GeoPoint(position.lat, position.lng),
+    position: new firestore.GeoPoint(position.lat, position.lng),
     message,
-    timestamp: new Date(),
+    timestamp: firestore.FieldValue.serverTimestamp(),
     secoursAlerte: false,
-    statut: 'nouveau'
+    statut: 'nouveau',
   });
   return ref.id;
 }
