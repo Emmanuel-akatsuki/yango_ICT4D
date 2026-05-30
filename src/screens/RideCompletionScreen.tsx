@@ -129,7 +129,7 @@ export default function RideCompletionScreen({
             <View style={styles.ratingSection}>
               <Text style={styles.ratingLabel}>Comment s'est déroulée la course?</Text>
               {renderStars()}
-              <Text style={styles.ratingValue}>
+              <Text style={[styles.ratingValue, {color: '#D32F2F'}]}>
                 {rating === 0
                   ? 'Sélectionnez une note'
                   : `Note: ${rating}/${5}`}
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFC107',
+    color: '#D32F2F',
   },
   content: {
     flex: 1,
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#D32F2F',
     paddingVertical: 14,
     borderRadius: 12,
     justifyContent: 'center',

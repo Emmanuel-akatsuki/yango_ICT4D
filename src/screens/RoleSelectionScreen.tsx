@@ -10,8 +10,8 @@ import {
 export default function RoleSelectionScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>🚗 Yango ICT4D</Text>
-      <Text style={styles.subtitle}>Choisissez votre rôle</Text>
+      <Text style={styles.title}>🚘 Yango ICT4D</Text>
+      <Text style={styles.subtitle}>Choisissez votre rôle pour continuer</Text>
 
       <TouchableOpacity
         style={[styles.button, styles.clientButton]}
@@ -35,7 +35,7 @@ export default function RoleSelectionScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -43,12 +43,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFC107',
+    color: '#D32F2F',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#aaa',
+    color: '#666',
     marginBottom: 48,
   },
   button: {
@@ -58,8 +58,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  clientButton: { backgroundColor: '#1565C0' },
-  driverButton: { backgroundColor: '#2E7D32' },
+  clientButton: { backgroundColor: '#D32F2F' },
+  driverButton: { backgroundColor: '#B71C1C' },
   buttonIcon: { fontSize: 40, marginBottom: 8 },
   buttonText: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
 });

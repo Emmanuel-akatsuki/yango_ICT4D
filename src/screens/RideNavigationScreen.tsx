@@ -11,7 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import * as geolocation from '@react-native-community/geolocation';
+import Geolocation from '@react-native-community/geolocation';
 import {
   subscribeToCurrentRide,
   RideRequest,
@@ -55,7 +55,7 @@ export default function RideNavigationScreen({ driverId }: RideNavigationScreenP
   // Surveiller la position du chauffeur
   useEffect(() => {
     setIsLoadingMap(true);
-    geolocation.getCurrentPosition(
+    Geolocation.getCurrentPosition(
       (position) => {
         const newPosition = {
           lat: position.coords.latitude,
@@ -72,7 +72,7 @@ export default function RideNavigationScreen({ driverId }: RideNavigationScreenP
     );
 
     // Surveiller les changements de position
-    watchId.current = geolocation.watchPosition(
+    watchId.current = Geolocation.watchPosition(
       (position) => {
         setDriverPosition({
           lat: position.coords.latitude,
@@ -85,7 +85,7 @@ export default function RideNavigationScreen({ driverId }: RideNavigationScreenP
 
     return () => {
       if (watchId.current !== null) {
-        geolocation.clearWatch(watchId.current);
+        Geolocation.clearWatch(watchId.current);
       }
     };
   }, []);

@@ -11,15 +11,15 @@ def enableProguardInReleaseBuilds = false
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 android {
-    ndkVersion rootProject.ext.ndkVersion
+    ndkVersion "26.1.10909125"
     buildToolsVersion rootProject.ext.buildToolsVersion
-    compileSdk rootProject.ext.compileSdkVersion
+    compileSdk 35
 
-    namespace "com.yangoict4d"
+    namespace "com.yango.app"
     defaultConfig {
         applicationId "com.yango.app"
         minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        targetSdk 35
         versionCode 1
         versionName "1.0"
     }
@@ -50,10 +50,4 @@ dependencies {
     } else {
         implementation jscFlavor
     }
-
-    // Firebase avec versions explicites
-    implementation "com.google.firebase:firebase-auth-ktx:22.3.1"
-    implementation "com.google.firebase:firebase-firestore-ktx:24.10.3"
-    implementation "com.google.firebase:firebase-messaging-ktx:23.4.1"
 }
-

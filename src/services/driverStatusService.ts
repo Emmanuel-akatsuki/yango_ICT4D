@@ -1,51 +1,26 @@
-<<<<<<< HEAD
 import firestore from '@react-native-firebase/firestore';
-
-export async function updateDriverStatus(driverId: string, isOnline: boolean, position?: { lat: number; lng: number }) {
-  const updateData: any = { isOnline, lastUpdated: firestore.FieldValue.serverTimestamp() };
-  if (position) {
-    updateData.currentPosition = new firestore.GeoPoint(position.lat, position.lng);
-  }
-  await firestore().collection('drivers').doc(driverId).update(updateData);
-}
-
-export function subscribeToDriverPosition(driverId: string, callback: (position: { lat: number; lng: number }) => void) {
-  return firestore().collection('drivers').doc(driverId).onSnapshot(snap => {
-    if (snap.exists && snap.data()?.currentPosition) {
-      const pos = snap.data()!.currentPosition;
-      callback({ lat: pos.latitude, lng: pos.longitude });
-=======
-import { db } from '../config/firebase';
-import { doc, updateDoc, getDoc, onSnapshot, GeoPoint, setDoc } from 'firebase/firestore';
-import { Timestamp } from 'firebase/firestore';
 
 /**
  * Gestion du statut du chauffeur (En ligne / Hors ligne)
  * et position en temps réel
  */
 
-/**
- * Créer ou mettre à jour le statut du chauffeur
- */
 export async function updateDriverStatus(
   driverId: string,
   isOnline: boolean,
   position?: { lat: number; lng: number }
 ) {
   try {
-    const driverRef = doc(db, 'drivers', driverId);
     const updateData: any = {
       isOnline,
-      lastUpdated: Timestamp.now(),
+      lastUpdated: firestore.FieldValue.serverTimestamp(),
     };
 
     if (position) {
-      updateData.currentPosition = new GeoPoint(position.lat, position.lng);
+      updateData.currentPosition = new firestore.GeoPoint(position.lat, position.lng);
     }
 
-    // Utiliser setDoc avec merge pour éviter les erreurs si le document n'existe pas
-    await setDoc(driverRef, updateData, { merge: true });
-    
+    await firestore().collection('drivers').doc(driverId).set(updateData, { merge: true });
     console.log(`Statut du chauffeur ${driverId} mis à jour: ${isOnline ? 'En ligne' : 'Hors ligne'}`);
   } catch (error) {
     console.error('Erreur lors de la mise à jour du statut du chauffeur:', error);
@@ -53,45 +28,37 @@ export async function updateDriverStatus(
   }
 }
 
-/**
- * Écouter les mises à jour de position du chauffeur en temps réel
- */
 export function subscribeToDriverPosition(
   driverId: string,
   callback: (position: { lat: number; lng: number } | null) => void
 ) {
-  const driverRef = doc(db, 'drivers', driverId);
-  
-  return onSnapshot(driverRef, (docSnap) => {
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      if (data.currentPosition) {
-        const pos = data.currentPosition;
-        callback({ lat: pos.latitude, lng: pos.longitude });
+  return firestore().collection('drivers').doc(driverId).onSnapshot(
+    (docSnap) => {
+      if (docSnap.exists) {
+        const data = docSnap.data();
+        if (data?.currentPosition) {
+          const pos = data.currentPosition;
+          callback({ lat: pos.latitude, lng: pos.longitude });
+        } else {
+          callback(null);
+        }
       } else {
         callback(null);
       }
-    } else {
+    },
+    (error) => {
+      console.error('Erreur lors de l\'écoute de la position du chauffeur:', error);
       callback(null);
->>>>>>> f970ba1f6bb0294d62b4e428482ec6fcbc7001ea
     }
-  }, (error) => {
-    console.error('Erreur lors de l\'écoute de la position du chauffeur:', error);
-    callback(null);
-  });
+  );
 }
 
 export async function getDriverInfo(driverId: string) {
-<<<<<<< HEAD
-  const snap = await firestore().collection('drivers').doc(driverId).get();
-  return snap.exists ? snap.data() : null;
-=======
   try {
-    const driverRef = doc(db, 'drivers', driverId);
-    const docSnap = await getDoc(driverRef);
-    
-    if (docSnap.exists()) {
-      return docSnap.data();
+    const docSnap = await firestore().collection('drivers').doc(driverId).get();
+    if (docSnap.exists) {
+      const data = docSnap.data();
+      return data;
     }
     return null;
   } catch (error) {
@@ -100,9 +67,6 @@ export async function getDriverInfo(driverId: string) {
   }
 }
 
-/**
- * Vérifier si un chauffeur est en ligne
- */
 export async function isDriverOnline(driverId: string): Promise<boolean> {
   try {
     const driverInfo = await getDriverInfo(driverId);
@@ -113,9 +77,6 @@ export async function isDriverOnline(driverId: string): Promise<boolean> {
   }
 }
 
-/**
- * Mettre le chauffeur hors ligne
- */
 export async function setDriverOffline(driverId: string) {
   try {
     await updateDriverStatus(driverId, false);
@@ -123,5 +84,4 @@ export async function setDriverOffline(driverId: string) {
     console.error('Erreur lors de la mise du chauffeur hors ligne:', error);
     throw error;
   }
->>>>>>> f970ba1f6bb0294d62b4e428482ec6fcbc7001ea
 }

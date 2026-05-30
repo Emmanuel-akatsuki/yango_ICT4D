@@ -1,22 +1,5 @@
-<<<<<<< HEAD
 import firestore from '@react-native-firebase/firestore';
-=======
-import { db } from '../config/firebase';
-import {
-  collection,
-  addDoc,
-  doc,
-  updateDoc,
-  onSnapshot,
-  query,
-  where,
-  GeoPoint,
-  Timestamp,
-  getDocs,
-  DocumentSnapshot,
-} from 'firebase/firestore';
-  import { geohashForLocation, geohashQueryBounds, distanceBetween } from 'geofire-common';
->>>>>>> f970ba1f6bb0294d62b4e428482ec6fcbc7001ea
+import { geohashQueryBounds, distanceBetween } from 'geofire-common';
 
 export enum RideStatus {
   PENDING = 'pending',
@@ -39,15 +22,9 @@ export interface RideRequest {
   dropoffAddress: string;
   status: RideStatus;
   fare: number;
-<<<<<<< HEAD
-  distance: number;
+  distance?: number;
   duration: number;
   requestedAt: any;
-=======
-  distance?: number; // En mètres ou km selon le contexte
-  duration: number; // en secondes
-  requestedAt: any; // Timestamp
->>>>>>> f970ba1f6bb0294d62b4e428482ec6fcbc7001ea
   acceptedAt?: any;
   startedAt?: any;
   completedAt?: any;
@@ -100,18 +77,8 @@ export async function completeRide(rideId: string) {
   });
 }
 
-<<<<<<< HEAD
-export function subscribeToPendingRides(callback: (rides: RideRequest[]) => void) {
-  return firestore().collection('rides')
-    .where('status', '==', RideStatus.PENDING)
-    .onSnapshot(snap => {
-      const rides: RideRequest[] = snap.docs.map(d => ({ id: d.id, ...d.data() } as RideRequest));
-      callback(rides);
-    });
-=======
 /**
  * Écouter les courses en attente dans un rayon donné (avec géofencing)
- * IMPORTANT: Cette fonction doit être appelée avec la position actuelle du chauffeur
  */
 export function subscribeToPendingRides(
   pickupLat: number,
@@ -119,59 +86,51 @@ export function subscribeToPendingRides(
   radiusKm: number = 5,
   callback: (rides: RideRequest[]) => void
 ) {
-  // Utiliser geofire-common pour le géofencing
   const center: [number, number] = [pickupLat, pickupLng];
   const bounds = geohashQueryBounds(center, radiusKm * 1000);
   const ridesToReturn: Map<string, RideRequest> = new Map();
   let unsubscribers: (() => void)[] = [];
 
-  // Créer des queries pour chaque limite de geohash
   bounds.forEach((bound) => {
-    const q = query(
-      collection(db, 'rides'),
-      where('status', '==', RideStatus.PENDING),
-      where('pickupGeohash', '>=', bound[0]),
-      where('pickupGeohash', '<=', bound[1])
-    );
+    const unsubscribe = firestore()
+      .collection('rides')
+      .where('status', '==', RideStatus.PENDING)
+      .where('pickupGeohash', '>=', bound[0])
+      .where('pickupGeohash', '<=', bound[1])
+      .onSnapshot(querySnapshot => {
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          const pickupPos = data.pickupLocation;
+          
+          if (pickupPos && pickupPos.latitude && pickupPos.longitude) {
+            const distance = distanceBetween(
+              [pickupPos.latitude, pickupPos.longitude],
+              center
+            );
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const pickupPos = data.pickupLocation;
-        
-        // Vérifier si la distance est vraiment dans le rayon (car geohash est approximatif)
-        if (pickupPos && pickupPos.latitude && pickupPos.longitude) {
-          const distance = distanceBetween(
-            [pickupPos.latitude, pickupPos.longitude],
-            center
-          );
-
-          if (distance <= radiusKm) {
-            ridesToReturn.set(docSnap.id, {
-              id: docSnap.id,
-              ...data,
-              distance: distance, // Ajouter la distance calculée
-            } as RideRequest);
-          } else {
-            ridesToReturn.delete(docSnap.id);
+            if (distance <= radiusKm) {
+              ridesToReturn.set(docSnap.id, {
+                id: docSnap.id,
+                ...(data as RideRequest),
+                distance: distance,
+              } as RideRequest);
+            } else {
+              ridesToReturn.delete(docSnap.id);
+            }
           }
-        }
-      });
+        });
 
-      // Retourner les courses triées par distance
-      const sortedRides = Array.from(ridesToReturn.values())
-        .sort((a, b) => (a.distance || 0) - (b.distance || 0));
-      callback(sortedRides);
-    });
+        const sortedRides = Array.from(ridesToReturn.values())
+          .sort((a, b) => (a.distance || 0) - (b.distance || 0));
+        callback(sortedRides);
+      });
 
     unsubscribers.push(unsubscribe);
   });
 
-  // Retourner une fonction pour nettoyer tous les listeners
   return () => {
     unsubscribers.forEach((unsub) => unsub());
   };
->>>>>>> f970ba1f6bb0294d62b4e428482ec6fcbc7001ea
 }
 
 export function subscribeToCurrentRide(driverId: string, callback: (ride: RideRequest | null) => void) {
@@ -189,27 +148,11 @@ export function subscribeToCurrentRide(driverId: string, callback: (ride: RideRe
 }
 
 export async function getRideDetails(rideId: string): Promise<RideRequest | null> {
-<<<<<<< HEAD
-  const snap = await firestore().collection('rides').doc(rideId).get();
-  return snap.exists ? { id: snap.id, ...snap.data() } as RideRequest : null;
-=======
   try {
-    const rideRef = doc(db, 'rides', rideId);
-    const docSnap = await getDocs(collection(db, 'rides'));
-    
-    for (const d of docSnap.docs) {
-      if (d.id === rideId) {
-        const data = d.data();
-        return { 
-          id: d.id, 
-          ...data 
-        } as RideRequest;
-      }
-    }
-    return null;
+    const snap = await firestore().collection('rides').doc(rideId).get();
+    return snap.exists ? { id: snap.id, ...snap.data() } as RideRequest : null;
   } catch (error) {
     console.error('Erreur lors de la récupération des détails de la course:', error);
     return null;
   }
->>>>>>> f970ba1f6bb0294d62b4e428482ec6fcbc7001ea
 }
