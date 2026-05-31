@@ -1,21 +1,62 @@
-import auth from '@react-native-firebase/auth';
-import { createUser } from './userService';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
+} from 'firebase/auth';
 
-export async function registerEmail(email: string, password: string, nom: string, telephone: string, role: string) {
-  const { user } = await auth().createUserWithEmailAndPassword(email, password);
-  await createUser(user.uid, { nom, telephone, email, role });
-  return user;
-}
+import {
+  doc,
+  setDoc,
+  getDoc
+} from 'firebase/firestore';
 
-export async function loginEmail(email: string, password: string) {
-  const { user } = await auth().signInWithEmailAndPassword(email, password);
-  return user;
-}
+import {auth, db} from '../firebase/firebaseConfig';
 
-export async function logout() {
-  await auth().signOut();
-}
+export const registerUser = async (
+  name,
+  email,
+  password,
+  phone,
+  role
+) => {
 
-export function onAuthChange(callback: (user: any) => void) {
-  return auth().onAuthStateChanged(callback);
-}
+  const result = await createUserWithEmailAndPassword(
+    auth,
+    email,
+    password
+  );
+
+  const uid = result.user.uid;
+
+  await setDoc(doc(db, 'users', uid), {
+    uid,
+    name,
+    email,
+    phone,
+    role
+  });
+
+  return result;
+};
+
+export const loginUser = async (
+  email,
+  password
+) => {
+
+  const result =
+    await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+  return result;
+};
+
+export const getUserData = async uid => {
+
+  const userRef =
+    await getDoc(doc(db, 'users', uid));
+
+  return userRef.data();
+};

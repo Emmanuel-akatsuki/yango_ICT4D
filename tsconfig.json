@@ -1,18 +1,8 @@
 {
   "extends": "@react-native/typescript-config",
   "compilerOptions": {
-    "jsx": "react-native",
-    "types": ["jest"],
-    "lib": ["es2020", "dom"],
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "strict": true,
-    "noImplicitAny": true
+    "types": ["jest"]
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["**/node_modules", "**/Pods", "**/build", "**/.next"]
+  "exclude": ["**/node_modules", "**/Pods"]
 }
